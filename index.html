@@ -6,30 +6,37 @@
 <title>Reading study: do AI assistants stay in character?</title>
 <meta name="description" content="A 10-minute anonymous academic study. Read short AI replies and rate how well they follow their instructions.">
 <style>
-  :root { --bg:#fafaf7; --ink:#1b1b1b; --muted:#5c5c5c; --line:#e3e1da; --accent:#1a5fd1; --card:#ffffff; }
+  :root { --bg:#fafaf7; --ink:#1b1b1b; --muted:#5c5c5c; --line:#e3e1da; --accent:#1a5fd1; --card:#ffffff; --warn:#b3261e; }
   @media (prefers-color-scheme: dark) {
-    :root { --bg:#141414; --ink:#ececec; --muted:#a3a3a3; --line:#2c2c2c; --accent:#7aa7ff; --card:#1c1c1c; }
+    :root { --bg:#141414; --ink:#ececec; --muted:#a3a3a3; --line:#2c2c2c; --accent:#7aa7ff; --card:#1c1c1c; --warn:#f2b8b5; }
   }
   * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
   body { margin:0; background:var(--bg); color:var(--ink);
          font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
   main { max-width:640px; margin:0 auto; padding:48px 22px 64px; }
   h1 { font-size:1.6rem; line-height:1.25; margin:0 0 .4em; }
   .lede { color:var(--muted); margin:0 0 1.6em; }
   .facts { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 0 1.8em; }
-  .facts div { background:var(--card); border:1px solid var(--line); border-radius:10px;
-               padding:12px 14px; font-size:.9rem; }
+  .facts div { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:.9rem; }
   .facts b { display:block; font-size:1.05rem; }
   h2 { font-size:1.05rem; margin:1.8em 0 .4em; }
   ul { padding-left:1.2em; margin:.4em 0; }
   li { margin:.25em 0; }
-  .start { display:inline-block; margin:1.6em 0 .6em; padding:15px 28px; background:var(--accent);
-           color:#fff; text-decoration:none; border-radius:10px; font-weight:600; font-size:1.05rem; }
-  .where { font-size:.85rem; color:var(--muted); }
-  .box { background:var(--card); border:1px solid var(--line); border-radius:10px;
-         padding:14px 16px; margin-top:1.4em; font-size:.93rem; }
-  footer { margin-top:2.6em; padding-top:1.2em; border-top:1px solid var(--line);
-           font-size:.85rem; color:var(--muted); }
+  .btn { display:inline-block; margin:1.2em 0 .5em; padding:15px 28px; background:var(--accent); color:#fff;
+         text-decoration:none; border:0; border-radius:10px; font-weight:600; font-size:1.05rem; cursor:pointer; }
+  .btn2 { margin-top:8px; padding:9px 16px; border:1px solid var(--line); background:var(--card); color:var(--ink);
+          border-radius:8px; font-size:.95rem; cursor:pointer; }
+  .where, .note { font-size:.86rem; color:var(--muted); }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-top:1.4em; }
+  .lab { font-size:.78rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:1.5rem; font-weight:700; letter-spacing:.08em; margin:.1em 0 .3em; }
+  input { width:100%; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; padding:10px; margin-top:8px;
+          border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+  .warn { color:var(--warn); font-size:.86rem; }
+  hr { border:0; border-top:1px solid var(--line); margin:1.4em 0; }
+  footer { margin-top:2.6em; padding-top:1.2em; border-top:1px solid var(--line); font-size:.85rem; color:var(--muted); }
+  footer a { color:inherit; }
   @media (max-width:520px) { .facts { grid-template-columns:1fr; } }
 </style>
 </head>
@@ -61,18 +68,151 @@
     <li>Taking part is voluntary and you can stop at any point. You must be 18 or older.</li>
   </ul>
 
-  <a class="start" href="https://script.google.com/macros/s/AKfycbwb2RLjs_UNVxKmfedb17b6mUTF3Yt8jZhP9xOAtmT5UaEBp0JLtBkwd1kC8XWblj1gIg/exec" rel="noopener">Start the study &rarr;</a>
-  <p class="where">This opens a short Google page that assigns you a set, then a
-  Google Form. Neither will ever ask for your password.</p>
+  <!-- step 1: nothing handed out until they press this -->
+  <div id="intro">
+    <button class="btn" id="start" type="button">Start the study &rarr;</button>
+    <p class="where">You'll get a set to rate as a Google Form. It will never ask for your password.</p>
+  </div>
 
-  <div class="box"><b>Want to do more?</b> Every time you start, you get a
-  <em>different</em> set &mdash; never one you've already seen. After your first set you'll
-  be shown a personal link: save it, and use it if you come back another day. There are
-  65 sets in total, and every extra one makes the results stronger.</div>
+  <!-- shown ONLY when neither this browser nor the link knows who they are -->
+  <div id="gate" class="panel" hidden>
+    <p style="margin-top:0"><b>Have you taken part before?</b></p>
+    <button class="btn" id="isnew" type="button" style="margin-top:.2em">No &mdash; this is my first set</button>
+    <hr>
+    <p style="margin:0">Yes &mdash; paste your personal link or code, so you aren't shown texts you've already rated:</p>
+    <input id="man" placeholder="PD-XXXXXX or your saved link" autocomplete="off">
+    <p class="warn" id="manwarn" hidden>That doesn't look like a code &mdash; it's <b>PD-</b> followed by six characters.</p>
+    <button class="btn2" id="mango" type="button">Continue where I left off</button>
+  </div>
+
+  <div id="loading" class="panel" hidden><p style="margin:0">Finding you a set&hellip;</p></div>
+
+  <!-- the assignment -->
+  <div id="assigned" hidden>
+    <p id="welcome" hidden><b>Welcome back.</b> This is a set you haven't seen before.</p>
+    <div class="panel">
+      <div class="lab">Your participant code</div>
+      <div class="code" id="code"></div>
+      <div class="note" id="cnote"></div>
+    </div>
+    <a class="btn" id="go" href="#" rel="noopener">Open your set &rarr;</a>
+    <div class="panel">
+      <div class="lab">Coming back another day?</div>
+      <button class="btn2" id="copy" type="button">Copy my personal link</button>
+      <p class="note" id="copied" hidden style="margin:.5em 0 0"><b>Copied.</b> Paste it
+      somewhere safe &mdash; a note, or a message to yourself.</p>
+      <p class="note" style="margin-bottom:0">Your personal link remembers which sets you've
+      done. Without it we can't tell you apart from a new volunteer, and you may be shown the
+      same texts again.</p>
+    </div>
+    <p class="note">After you submit, come back to this page (or your personal link) for
+    another set &mdash; every one is different. There are 65 in total.</p>
+  </div>
+
+  <div id="done" class="panel" hidden><p style="margin:0"><b>You've completed every set we have.</b>
+    Thank you &mdash; that's a remarkable amount of help.</p></div>
+  <div id="err" class="panel" hidden><p style="margin:0">Something went wrong finding you a set.
+    Please reload the page and try again. If it keeps happening, email us (below).</p></div>
 
   <footer>
-    Run by Riddhi Chatterjee, International Institute of Information Technology Bangalore. Questions or concerns: <a href="mailto:Riddhi.Chatterjee@iiitb.ac.in">Riddhi.Chatterjee@iiitb.ac.in</a>.
+    Run by Riddhi Chatterjee, International Institute of Information Technology Bangalore.
+    Questions or concerns: <a href="mailto:Riddhi.Chatterjee@iiitb.ac.in">Riddhi.Chatterjee@iiitb.ac.in</a>.
   </footer>
 </main>
+
+<script>
+(function () {
+  // The router runs as a JSON API. A cross-site fetch carries no Google cookies, so the
+  // "signed into several Google accounts" failure of the Apps Script page cannot occur.
+  var API = 'https://script.google.com/macros/s/AKfycbwb2RLjs_UNVxKmfedb17b6mUTF3Yt8jZhP9xOAtmT5UaEBp0JLtBkwd1kC8XWblj1gIg/exec';
+  var CODE_RE = /PD-[A-Z2-9]{6}/;
+  function el(id) { return document.getElementById(id); }
+  function only(id) {
+    ['intro', 'gate', 'loading', 'assigned', 'done', 'err'].forEach(function (x) {
+      el(x).hidden = (x !== id);
+    });
+  }
+
+  var urlCode = null;
+  try {
+    var q = new URLSearchParams(location.search).get('p') || '';
+    if (/^PD-[A-Z2-9]{6}$/.test(q)) urlCode = q;
+  } catch (e) {}
+  var lsCode = null, seen = [];
+  try {
+    lsCode = localStorage.getItem('pd_code');
+    seen = JSON.parse(localStorage.getItem('pd_seen') || '[]');
+  } catch (e) {}
+  if (!Array.isArray(seen)) seen = [];
+  var known = urlCode || lsCode;
+
+  el('start').onclick = function () {
+    if (known) assign(known, true); else only('gate');
+  };
+  el('isnew').onclick = function () { assign(null, false); };
+  el('mango').onclick = function () {
+    var m = (el('man').value || '').toUpperCase().match(CODE_RE);
+    if (m) assign(m[0], true); else el('manwarn').hidden = false;
+  };
+  // The personal link is never shown as a bare URL -- it sits behind a button.
+  var resumeUrl = '';
+  function copied() {
+    el('copy').textContent = 'Link copied \u2713';
+    el('copied').hidden = false;
+  }
+  function fallbackCopy() {
+    // Older browsers: copy through an off-screen field; if even that is refused, hand
+    // them the link in a prompt they can copy from, rather than failing silently.
+    var t = document.createElement('textarea');
+    t.value = resumeUrl; t.setAttribute('readonly', '');
+    t.style.position = 'fixed'; t.style.left = '-9999px';
+    document.body.appendChild(t); t.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(t);
+    if (ok) copied(); else window.prompt('Copy your personal link:', resumeUrl);
+  }
+  el('copy').onclick = function () {
+    if (!resumeUrl) return;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(resumeUrl).then(copied, fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  };
+
+  function assign(code, returning) {
+    only('loading');
+    var url = API + '?action=assign' +
+      (code ? '&code=' + encodeURIComponent(code) : '') +
+      (seen.length ? '&seen=' + encodeURIComponent(seen.join(',')) : '');
+    fetch(url, { credentials: 'omit' })
+      .then(function (r) { return r.json(); })
+      .then(function (r) { render(r, returning); })
+      .catch(function () { only('err'); });
+  }
+
+  function render(r, returning) {
+    if (!r || r.error || r.busy) { only('err'); return; }
+    if (r.exhausted) { only('done'); return; }
+    try {
+      localStorage.setItem('pd_code', r.code);
+      if (seen.indexOf(r.sitting) < 0) seen.push(r.sitting);
+      localStorage.setItem('pd_seen', JSON.stringify(seen));
+    } catch (e) {}
+    known = r.code;
+    el('code').textContent = r.code;
+    el('cnote').textContent = r.prefilled
+      ? 'Already filled in on the form - you do not need to type it.'
+      : 'Please copy this into the first question of the form.';
+    el('go').href = r.url;
+    resumeUrl = location.origin + location.pathname + '?p=' + r.code;
+    el('welcome').hidden = !returning;
+    el('copy').textContent = 'Copy my personal link';
+    el('copied').hidden = true;
+    only('assigned');
+  }
+})();
+</script>
 </body>
 </html>
